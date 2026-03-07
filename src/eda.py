@@ -14,11 +14,11 @@ OUTPUT_DIR = Path("results/eda")
 FIGURES_DIR = OUTPUT_DIR / "figures"
 TEXT_DIR = OUTPUT_DIR / "reports"
 
-TEXT_COLUMNS = ["titre", "ingredients", "recette"]
 TARGET_COLUMN = "type"
 
 
 def ensure_directories():
+    """Create output directories if they do not exist."""
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     TEXT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -42,8 +42,7 @@ def clean_text(text):
 
 def tokenize(text):
     """Tokenize cleaned text into words."""
-    text = clean_text(text)
-    return text.split()
+    return clean_text(text).split()
 
 
 def build_full_text(df):
@@ -56,12 +55,14 @@ def build_full_text(df):
 
 
 def save_text_report(filename, content):
+    """Save a text report to disk."""
     path = TEXT_DIR / filename
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
 
 
 def dataset_overview(df):
+    """Generate and save the main dataset overview report."""
     lines = []
     lines.append("DATASET OVERVIEW")
     lines.append("=" * 80)
@@ -90,33 +91,26 @@ def add_length_features(df):
     return df
 
 
-def length_statistics(df):
-    lines = []
-    lines.append("TEXT LENGTH STATISTICS")
-    lines.append("=" * 80)
+def print_length_statistics(df):
+    """Print descriptive statistics for text lengths."""
     stats = df[["title_length", "ingredients_length", "recipe_length", "full_text_length"]].describe()
-    lines.append(stats.to_string())
-
-    report = "\n".join(lines)
-    print("\n" + report)
-    save_text_report("length_statistics.txt", report)
+    print("\nTEXT LENGTH STATISTICS")
+    print("=" * 80)
+    print(stats.to_string())
 
 
-def length_by_class(df):
-    lines = []
-    lines.append("TEXT LENGTH BY CLASS")
-    lines.append("=" * 80)
+def print_length_by_class(df):
+    """Print text length statistics grouped by class."""
+    print("\nTEXT LENGTH BY CLASS")
+    print("=" * 80)
 
     for col in ["title_length", "ingredients_length", "recipe_length", "full_text_length"]:
-        lines.append(f"\n{col}")
-        lines.append(df.groupby(TARGET_COLUMN)[col].describe().round(2).to_string())
-
-    report = "\n".join(lines)
-    print("\n" + report)
-    save_text_report("length_by_class.txt", report)
+        print(f"\n{col}")
+        print(df.groupby(TARGET_COLUMN)[col].describe().round(2).to_string())
 
 
 def plot_class_distribution(df):
+    """Plot and save class distribution."""
     plt.figure(figsize=(8, 5))
     order = df[TARGET_COLUMN].value_counts().index
     sns.countplot(data=df, x=TARGET_COLUMN, order=order)
@@ -129,6 +123,7 @@ def plot_class_distribution(df):
 
 
 def plot_text_length_histogram(df, column, title, filename):
+    """Plot and save histogram for a text length feature."""
     plt.figure(figsize=(8, 5))
     sns.histplot(df[column], bins=50)
     plt.title(title)
@@ -140,6 +135,7 @@ def plot_text_length_histogram(df, column, title, filename):
 
 
 def plot_length_boxplot_by_class(df, column, title, filename):
+    """Plot and save boxplot of text length by class."""
     plt.figure(figsize=(8, 5))
     sns.boxplot(data=df, x=TARGET_COLUMN, y=column)
     plt.title(title)
@@ -150,10 +146,10 @@ def plot_length_boxplot_by_class(df, column, title, filename):
     plt.close()
 
 
-def get_top_words_per_class(df, text_column="recette", top_n=20, min_word_length=3):
-    lines = []
-    lines.append(f"TOP WORDS PER CLASS - COLUMN: {text_column}")
-    lines.append("=" * 80)
+def print_top_words_per_class(df, text_column="recette", top_n=20, min_word_length=3):
+    """Print most frequent words per class for a given text column."""
+    print(f"\nTOP WORDS PER CLASS - COLUMN: {text_column}")
+    print("=" * 80)
 
     for label in sorted(df[TARGET_COLUMN].unique()):
         texts = df.loc[df[TARGET_COLUMN] == label, text_column].astype(str)
@@ -162,19 +158,15 @@ def get_top_words_per_class(df, text_column="recette", top_n=20, min_word_length
             tokens.extend([tok for tok in tokenize(text) if len(tok) >= min_word_length])
 
         counter = Counter(tokens)
-        lines.append(f"\nClass: {label}")
+        print(f"\nClass: {label}")
         for word, count in counter.most_common(top_n):
-            lines.append(f"{word}\t{count}")
-
-    report = "\n".join(lines)
-    print("\n" + report)
-    save_text_report(f"top_words_per_class_{text_column}.txt", report)
+            print(f"{word}\t{count}")
 
 
-def get_top_ingredients_per_class(df, top_n=20, min_word_length=3):
-    lines = []
-    lines.append("TOP INGREDIENT TERMS PER CLASS")
-    lines.append("=" * 80)
+def print_top_ingredients_per_class(df, top_n=20, min_word_length=3):
+    """Print most frequent ingredient terms per class."""
+    print("\nTOP INGREDIENT TERMS PER CLASS")
+    print("=" * 80)
 
     for label in sorted(df[TARGET_COLUMN].unique()):
         texts = df.loc[df[TARGET_COLUMN] == label, "ingredients"].astype(str)
@@ -183,43 +175,35 @@ def get_top_ingredients_per_class(df, top_n=20, min_word_length=3):
             tokens.extend([tok for tok in tokenize(text) if len(tok) >= min_word_length])
 
         counter = Counter(tokens)
-        lines.append(f"\nClass: {label}")
+        print(f"\nClass: {label}")
         for word, count in counter.most_common(top_n):
-            lines.append(f"{word}\t{count}")
-
-    report = "\n".join(lines)
-    print("\n" + report)
-    save_text_report("top_ingredients_per_class.txt", report)
+            print(f"{word}\t{count}")
 
 
-def top_tfidf_terms_global(df, text_column="full_text", top_n=30, max_features=5000):
+def print_top_tfidf_terms_global(df, text_column="full_text", top_n=30, max_features=5000):
+    """Print top global TF-IDF terms."""
     texts = df[text_column].astype(str).apply(clean_text)
 
     vectorizer = TfidfVectorizer(
         max_features=max_features,
         ngram_range=(1, 2),
-        min_df=3
+        min_df=3,
     )
     X = vectorizer.fit_transform(texts)
     feature_names = vectorizer.get_feature_names_out()
     mean_scores = X.mean(axis=0).A1
     top_indices = mean_scores.argsort()[::-1][:top_n]
 
-    lines = []
-    lines.append(f"TOP GLOBAL TF-IDF TERMS - COLUMN: {text_column}")
-    lines.append("=" * 80)
+    print(f"\nTOP GLOBAL TF-IDF TERMS - COLUMN: {text_column}")
+    print("=" * 80)
     for idx in top_indices:
-        lines.append(f"{feature_names[idx]}\t{mean_scores[idx]:.6f}")
-
-    report = "\n".join(lines)
-    print("\n" + report)
-    save_text_report(f"top_tfidf_global_{text_column}.txt", report)
+        print(f"{feature_names[idx]}\t{mean_scores[idx]:.6f}")
 
 
-def top_tfidf_terms_per_class(df, text_column="full_text", top_n=20, max_features=5000):
-    lines = []
-    lines.append(f"TOP TF-IDF TERMS PER CLASS - COLUMN: {text_column}")
-    lines.append("=" * 80)
+def print_top_tfidf_terms_per_class(df, text_column="full_text", top_n=20, max_features=5000):
+    """Print top TF-IDF terms for each class."""
+    print(f"\nTOP TF-IDF TERMS PER CLASS - COLUMN: {text_column}")
+    print("=" * 80)
 
     for label in sorted(df[TARGET_COLUMN].unique()):
         texts = df.loc[df[TARGET_COLUMN] == label, text_column].astype(str).apply(clean_text)
@@ -227,27 +211,20 @@ def top_tfidf_terms_per_class(df, text_column="full_text", top_n=20, max_feature
         vectorizer = TfidfVectorizer(
             max_features=max_features,
             ngram_range=(1, 2),
-            min_df=2
+            min_df=2,
         )
         X = vectorizer.fit_transform(texts)
         feature_names = vectorizer.get_feature_names_out()
         mean_scores = X.mean(axis=0).A1
         top_indices = mean_scores.argsort()[::-1][:top_n]
 
-        lines.append(f"\nClass: {label}")
+        print(f"\nClass: {label}")
         for idx in top_indices:
-            lines.append(f"{feature_names[idx]}\t{mean_scores[idx]:.6f}")
-
-    report = "\n".join(lines)
-    print("\n" + report)
-    save_text_report(f"top_tfidf_per_class_{text_column}.txt", report)
+            print(f"{feature_names[idx]}\t{mean_scores[idx]:.6f}")
 
 
-def most_common_title_patterns(df, top_n=20):
-    """
-    Extract common title unigrams and bigrams.
-    Useful to see whether titles are strongly discriminative.
-    """
+def print_most_common_title_patterns(df, top_n=20):
+    """Print most common title unigrams and bigrams."""
     titles = df["titre"].astype(str).apply(clean_text)
 
     unigram_counter = Counter()
@@ -259,42 +236,34 @@ def most_common_title_patterns(df, top_n=20):
         bigrams = zip(tokens, tokens[1:])
         bigram_counter.update([" ".join(bg) for bg in bigrams])
 
-    lines = []
-    lines.append("MOST COMMON TITLE PATTERNS")
-    lines.append("=" * 80)
-    lines.append("\nTop title unigrams:")
+    print("\nMOST COMMON TITLE PATTERNS")
+    print("=" * 80)
+
+    print("\nTop title unigrams:")
     for term, count in unigram_counter.most_common(top_n):
-        lines.append(f"{term}\t{count}")
+        print(f"{term}\t{count}")
 
-    lines.append("\nTop title bigrams:")
+    print("\nTop title bigrams:")
     for term, count in bigram_counter.most_common(top_n):
-        lines.append(f"{term}\t{count}")
-
-    report = "\n".join(lines)
-    print("\n" + report)
-    save_text_report("title_patterns.txt", report)
+        print(f"{term}\t{count}")
 
 
-def outlier_examples(df, n=5):
-    """Save a few longest recipes for qualitative inspection."""
+def print_outlier_examples(df, n=5):
+    """Print a few longest recipes for qualitative inspection."""
     longest = df.sort_values("recipe_length", ascending=False).head(n)
 
-    lines = []
-    lines.append("LONGEST RECIPE EXAMPLES")
-    lines.append("=" * 80)
+    print("\nLONGEST RECIPE EXAMPLES")
+    print("=" * 80)
 
     for i, (_, row) in enumerate(longest.iterrows(), start=1):
-        lines.append(f"\nExample {i}")
-        lines.append(f"doc_id: {row['doc_id']}")
-        lines.append(f"type: {row['type']}")
-        lines.append(f"title: {row['titre']}")
-        lines.append(f"recipe_length: {row['recipe_length']}")
-        lines.append(f"ingredients_length: {row['ingredients_length']}")
+        print(f"\nExample {i}")
+        print(f"doc_id: {row['doc_id']}")
+        print(f"type: {row['type']}")
+        print(f"title: {row['titre']}")
+        print(f"recipe_length: {row['recipe_length']}")
+        print(f"ingredients_length: {row['ingredients_length']}")
         preview = str(row["recette"])[:600].replace("\n", " ")
-        lines.append(f"recipe_preview: {preview}")
-
-    report = "\n".join(lines)
-    save_text_report("longest_recipe_examples.txt", report)
+        print(f"recipe_preview: {preview}")
 
 
 def main():
@@ -305,8 +274,9 @@ def main():
     df = add_length_features(df)
 
     dataset_overview(df)
-    length_statistics(df)
-    length_by_class(df)
+
+    print_length_statistics(df)
+    print_length_by_class(df)
 
     plot_class_distribution(df)
     plot_text_length_histogram(
@@ -347,20 +317,20 @@ def main():
         filename="title_length_by_class_boxplot.png",
     )
 
-    get_top_words_per_class(df, text_column="titre", top_n=20)
-    get_top_words_per_class(df, text_column="ingredients", top_n=20)
-    get_top_words_per_class(df, text_column="recette", top_n=20)
+    print_top_words_per_class(df, text_column="titre", top_n=20)
+    print_top_words_per_class(df, text_column="ingredients", top_n=20)
+    print_top_words_per_class(df, text_column="recette", top_n=20)
 
-    get_top_ingredients_per_class(df, top_n=25)
+    print_top_ingredients_per_class(df, top_n=25)
 
-    top_tfidf_terms_global(df, text_column="full_text", top_n=30)
-    top_tfidf_terms_per_class(df, text_column="full_text", top_n=20)
+    print_top_tfidf_terms_global(df, text_column="full_text", top_n=30)
+    print_top_tfidf_terms_per_class(df, text_column="full_text", top_n=20)
 
-    most_common_title_patterns(df, top_n=20)
-    outlier_examples(df, n=5)
+    print_most_common_title_patterns(df, top_n=20)
+    print_outlier_examples(df, n=5)
 
     print("\nEDA completed.")
-    print(f"Reports saved to: {TEXT_DIR}")
+    print(f"Report saved to: {TEXT_DIR / 'dataset_overview.txt'}")
     print(f"Figures saved to: {FIGURES_DIR}")
 
 
