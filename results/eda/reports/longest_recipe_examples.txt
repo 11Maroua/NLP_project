@@ -1,0 +1,42 @@
+LONGEST RECIPE EXAMPLES
+================================================================================
+
+Example 1
+doc_id: recette_223582.xml
+type: Dessert
+title: Saint-Honoré à pâte feuilletée
+recipe_length: 1366
+ingredients_length: 77
+recipe_preview: Pour la crème pâtissière : Fendez les gousses de vanille en deux (dans le sens de la longueur) et mettez-les dans le lait, avec la moitié du sucre (80gr) et la fécule de Maïs. Portez à ébullition puis réservez. Pendant ce temps, mettez les jaunes d’œufs et l’autre moitié du sucre (80 gr) dans un saladier et fouettez jusqu’à ce que le mélange blanchisse et soit mousseux (environ 3 minutes au batteur électrique). Ôtez la gousse de vanille du lait et grattez-les avec un couteau pour récupérer les graines et les mettre dans le lait. Versez le lait chaud sur le mélange jaunes-sucre, en fouettant sa
+
+Example 2
+doc_id: recette_166823.xml
+type: Plat principal
+title: Canette de fête
+recipe_length: 1240
+ingredients_length: 182
+recipe_preview: La marinade doit se préparer 24 heures avant de servir. Fourrer de fins morceaux de poitrines découpés (ou les lardons) dans les pruneaux puis les fourrer dans la canette. Dans un récipient pouvant contenir la canette, mélanger le vinaigre balsamique, 20 cl. de cognac, les clémentines passées au presse-agrumes, le piment, le sel, le poivre, les clous de girofle. Rallonger avec assez d'eau pour noyer la canette et mélanger. Placer la canette dans le récipient. Laisser reposer une nuit. Dans la journée suivante, mélanger la marinade de temps en temps. Sortir la canette 3h00 avant de servir, enle
+
+Example 3
+doc_id: recette_43030.xml
+type: Dessert
+title: Bavarois praliné pistache, coeur de mousse au chocolat
+recipe_length: 1160
+ingredients_length: 156
+recipe_preview: Petits commentaires :J'ai indiqué les recettes en poids et en nombre d’oeufs, pour que les gens qui n’ont pas de balance analogique s’en sortent. Mais la pâtisserie étant affaire de précision, mieux vaut tout de même peser. La pâte de pistache se trouve en magasins pour professionels de la boulangerie (ou sur internet) par pot de 1 kg. J’ai utilisé de la pâte colorée et aromatisée. Mes feuilles de gélatine pèsent 2 g par feuille, ce qui est le poids standard en France mais pas en Belgique, je crois. Matériel : 1 moule à charnière de 24 cm de diam et de 6 cm de haut (à defaut, 1 cercle dans ces
+
+Example 4
+doc_id: recette_26291.xml
+type: Dessert
+title: Charlotte royale mousse au chocolat, poire et crème de marrons
+recipe_length: 1090
+ingredients_length: 53
+recipe_preview: Pour une charlotte d'environ 26 cm de diamètre et 10 cm de hauteur il vous faudra deux biscuits roulés. Préparation du dôme de biscuits: Préchauffez le four à thermostat 7 (210°C). Fouettez les jaunes avec le sucre pour que le mélange blanchisse et fasse ruban. Mélangez-y la moitié de la farine, puis incorporez-y la seconde moitié (le mélange est un peu épais, ne pas s'inquiéter).Incorporer alors délicatement les blancs d'oeufs montés en neige très ferme. Le faire e plusieurs fois... Le mélange s'assouplit au début, n'oubliez pas ensuite: doucement, à la cuiller en bois, soulever le mélange le
+
+Example 5
+doc_id: recette_80459.xml
+type: Plat principal
+title: Paëlla veritable recette de Valencia
+recipe_length: 955
+ingredients_length: 65
+recipe_preview: Avant toute chose, il faut se procurer un vrai plat a paëlla en acier poli (pas cher, environ 10 euros pour 9 personnes). Si vous avez déjà un plat et que vous ne savez pas pour combien de personnes il est, voici les conversions: 20 cm --> 1 28 cm --> 2 30 cm --> 3 32 cm --> 4 34 cm --> 5 36 cm --> 6 38 cm --> 7 40 cm --> 8 43 cm --> 9 46 cm --> 10 50 cm --> 12 55 cm --> 15 Ensuite, l'ideal serait d'avoir un trépied, afin d'avoir une répartition homogène de la chaleur lors de la cuisson, car dans une paëlla, le riz une fois versé ne se remue jamais, sous peine de dégager de l'amidon qui bloque

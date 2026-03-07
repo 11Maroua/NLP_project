@@ -1,0 +1,68 @@
+TOP TF-IDF TERMS PER CLASS - COLUMN: full_text
+================================================================================
+
+Class: Dessert
+de	0.167370
+le	0.091693
+la	0.083510
+et	0.072670
+les	0.067005
+sucre	0.046060
+en	0.045987
+un	0.040978
+au	0.040742
+chocolat	0.037016
+dans	0.036099
+une	0.035922
+beurre	0.032251
+pâte	0.031485
+crème	0.030617
+avec	0.029893
+farine	0.029777
+lait	0.029488
+pour	0.028606
+oeufs	0.028575
+
+Class: Entrée
+de	0.156649
+et	0.079188
+les	0.078153
+le	0.067851
+la	0.063382
+en	0.041168
+un	0.035326
+une	0.033432
+dans	0.033286
+au	0.030301
+avec	0.026797
+huile	0.026744
+crème	0.025116
+soupe	0.024934
+ou	0.023857
+sel	0.023601
+faire	0.023287
+du	0.022564
+poivre	0.022364
+ajouter	0.022281
+
+Class: Plat principal
+de	0.169839
+et	0.084404
+les	0.083162
+le	0.072219
+la	0.068175
+en	0.041538
+dans	0.036533
+un	0.035563
+une	0.034205
+faire	0.028722
+avec	0.028558
+au	0.026896
+ajouter	0.026891
+huile	0.026637
+du	0.024935
+ou	0.024530
+poulet	0.024243
+crème	0.023539
+ail	0.022903
+soupe	0.022624

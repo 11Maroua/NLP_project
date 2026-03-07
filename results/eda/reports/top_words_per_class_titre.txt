@@ -1,0 +1,68 @@
+TOP WORDS PER CLASS - COLUMN: titre
+================================================================================
+
+Class: Dessert
+aux	1061
+chocolat	664
+gâteau	509
+tarte	455
+pommes	318
+crème	202
+noix	168
+fruits	166
+mousse	152
+coco	146
+cake	134
+blanc	122
+amandes	121
+citron	114
+banane	113
+sans	107
+poires	105
+orange	104
+crumble	103
+fraises	98
+
+Class: Entrée
+aux	640
+salade	394
+soupe	229
+tarte	187
+saumon	179
+chèvre	148
+thon	130
+terrine	122
+tomates	120
+jambon	102
+crevettes	101
+cake	90
+courgettes	88
+velouté	87
+jacques	87
+foie	86
+quiche	84
+pommes	82
+légumes	81
+tomate	80
+
+Class: Plat principal
+aux	1507
+poulet	657
+gratin	289
+sauce	272
+porc	261
+pommes	237
+saumon	233
+tarte	230
+légumes	220
+courgettes	209
+terre	190
+pâtes	189
+boeuf	185
+jambon	180
+façon	170
+veau	169
+thon	165
+tomates	157
+curry	156
+champignons	143
