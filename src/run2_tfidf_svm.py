@@ -5,53 +5,99 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import f1_score, classification_report
+from sklearn.model_selection import cross_val_score, GridSearchCV
 from utils import load_data, preprocess, build_text
 
-# ── Chargement de nos données train-test ──────────────────────────────────────────────────
+# ── Chargement ──────────────────────────────────────────────────
 train, test = load_data()
 y_train = train['type']
 y_test  = test['type']
 
-# ── Experimentation : on teste plusieurs combinaisons de colonnes ─────
-combinaison_features = {
-    'titre seul'                    : ['titre'],
-    'titre + ingredients'           : ['titre', 'ingredients'],
-    'titre + ingredients + recette' : ['titre', 'ingredients', 'recette'],
+# ── Texte : meilleure config trouvée = titre + ingredients + recette
+X_train_text = build_text(train, ['titre', 'ingredients', 'recette']).apply(preprocess)
+X_test_text  = build_text(test,  ['titre', 'ingredients', 'recette']).apply(preprocess)
+
+# ── Pipeline TF-IDF + SVM ───────────────────────────────────────
+pipeline = Pipeline([
+    ('tfidf', TfidfVectorizer(sublinear_tf=True)),
+    ('clf',   SVC(kernel='linear'))
+])
+
+# ════════════════════════════════════════════════════════════════
+# ÉTAPE 1 — Grid Search pour trouver les meilleurs hyperparamètres
+# ════════════════════════════════════════════════════════════════
+print("="*60)
+print("ÉTAPE 1 — Grid Search ...")
+print("="*60)
+
+param_grid = {
+    'tfidf__ngram_range'  : [(1,1), (1,2), (1,3)],
+    'tfidf__max_features' : [5000, 10000, 15000],
+    'clf__C'              : [0.1, 1.0, 10.0],
 }
 
-resultats = {}
+grid = GridSearchCV(
+    pipeline,
+    param_grid,
+    cv=5,                    # 5-folds cross-validation
+    scoring='f1_macro',
+    n_jobs=-1,              
+    verbose=1
+)
+grid.fit(X_train_text, y_train)
 
-for nom, colonnes in combinaison_features.items():
-    print(f"\n{'='*50}")
-    print(f"Features Selectionnées : {nom}")
-    print('='*50)
+print(f"\nMeilleurs paramètres : {grid.best_params_}")
+print(f"Meilleur F1 macro CV : {grid.best_score_:.3f}")
 
-    # Construire et prétraiter le texte
-    X_train_text = build_text(train, colonnes).apply(preprocess)
-    X_test_text  = build_text(test,  colonnes).apply(preprocess)
+# ════════════════════════════════════════════════════════════════
+# ÉTAPE 2 — Cross-validation avec les meilleurs paramètres
+# ════════════════════════════════════════════════════════════════
+print("\n" + "="*60)
+print("ÉTAPE 2 — Cross-validation 5-folds")
+print("="*60)
 
-    # TF-IDF
-    vectorizer = TfidfVectorizer(
-        max_features=15000,
-        ngram_range=(1, 2),
-        sublinear_tf=True,
-    )
-    X_train_vec = vectorizer.fit_transform(X_train_text)
-    X_test_vec  = vectorizer.transform(X_test_text)
+best_pipeline = grid.best_estimator_
+cv_scores = cross_val_score(
+    best_pipeline,
+    X_train_text,
+    y_train,
+    cv=5,
+    scoring='f1_macro',
+    n_jobs=-1
+)
 
-    # SVM
-    clf = SVC(kernel='linear', C=1.0)
-    clf.fit(X_train_vec, y_train)
-    y_pred = clf.predict(X_test_vec)
+print(f"\nScores par fold : {[round(s,3) for s in cv_scores]}")
+print(f"F1 macro moyen  : {cv_scores.mean():.3f}")
+print(f"Écart-type      : {cv_scores.std():.3f}")
 
-    # Résultats
-    f1 = f1_score(y_test, y_pred, average='macro')
-    resultats[nom] = round(f1, 3)
-    print(classification_report(y_test, y_pred))
-    print(f"F1 macro : {f1:.3f}")
+if cv_scores.std() < 0.01:
+    print("→ Modèle très stable")
+elif cv_scores.std() < 0.03:
+    print("→ Modèle stable")
+else:
+    print("→ Modèle instable")
 
-# ── Tableau récapitulatif ────────────────────────────────────────
-print("\n=== RÉCAP TF-IDF + SVM ===")
-for nom, score in resultats.items():
-    print(f"{nom:<40} F1 macro = {score}")
+# ════════════════════════════════════════════════════════════════
+# ÉTAPE 3 — Évaluation finale sur le test avec les meilleurs params
+# ════════════════════════════════════════════════════════════════
+print("\n" + "="*60)
+print("ÉTAPE 3 — Évaluation finale sur le jeu de test")
+print("="*60)
+
+best_pipeline.fit(X_train_text, y_train)
+y_pred = best_pipeline.predict(X_test_text)
+
+print(classification_report(y_test, y_pred))
+print(f"F1 macro test : {f1_score(y_test, y_pred, average='macro'):.3f}")
+
+# ════════════════════════════════════════════════════════════════
+# RÉCAP FINAL
+# ════════════════════════════════════════════════════════════════
+print("\n" + "="*60)
+print("RÉCAP")
+print("="*60)
+print(f"Meilleurs paramètres  : {grid.best_params_}")
+print(f"F1 macro CV (train)   : {cv_scores.mean():.3f} ± {cv_scores.std():.3f}")
+print(f"F1 macro test         : {f1_score(y_test, y_pred, average='macro'):.3f}")

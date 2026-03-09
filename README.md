@@ -1,6 +1,6 @@
 # DEFT2013 Tâche 2 — Classification de recettes de cuisine
 
-NOM Prenom - NOM Prenom
+ABID Ikram - NAIT SLIMANI Maroua
 
 ---
 
@@ -101,73 +101,133 @@ Placer les fichiers `train.csv` et `test.csv` dans le dossier `data/`.
 - Suppression des stopwords français (NLTK)
 - Stemming (SnowballStemmer français)
 
-**Vectorisation :** `TfidfVectorizer(max_features=15000, ngram_range=(1,2), sublinear_tf=True)`
+**Optimisation :** Grid Search 5-folds sur 27 combinaisons d'hyperparamètres
+
+**Meilleurs paramètres trouvés :**
+- `ngram_range = (1,2)` — unigrammes + bigrammes
+- `max_features = 10 000`
+- `C = 1.0`
 
 **Classifieur :** `SVC(kernel='linear', C=1.0)`
 
-**Principe :** Représentation bag-of-words pondérée par la rareté des termes dans le corpus. Nous avons testé 3 combinaisons de colonnes :
+**Stabilité (cross-validation 5-folds) :**
 
-| Features                          | F1 macro |
-| --------------------------------- | -------: |
-| Titre seul                        |    0.816 |
-| Titre + ingrédients               |    0.825 |
-| **Titre + ingrédients + recette** | **0.862** |
+| Fold 1 | Fold 2 | Fold 3 | Fold 4 | Fold 5 | Moyenne | Écart-type |
+| -----: | -----: | -----: | -----: | -----: | ------: | ---------: |
+|  0.860 |  0.858 |  0.867 |  0.858 |  0.868 |   0.862 |  **±0.004** |
 
-**Résultats détaillés (meilleure config — titre + ingrédients + recette) :**
+> Écart-type très faible (±0.004) → modèle **très stable**, les scores ne dépendent pas du hasard.
+
+**Résultats sur le jeu de test :**
 
 | Classe         | Précision | Rappel |  F1  | Support |
 | -------------- | --------: | -----: | ---: | ------: |
 | Dessert        |      0.99 |   1.00 | 0.99 |     407 |
-| Entrée         |      0.77 |   0.69 | 0.72 |     337 |
-| Plat principal |      0.85 |   0.89 | 0.87 |     644 |
-| **macro avg**  |  **0.87** | **0.86** | **0.862** | **1388** |
+| Entrée         |      0.76 |   0.70 | 0.73 |     337 |
+| Plat principal |      0.85 |   0.88 | 0.87 |     644 |
+| **macro avg**  |  **0.87** | **0.86** | **0.863** | **1388** |
+
+> F1 CV (0.862) ≈ F1 test (0.863) → **pas de surapprentissage**, le modèle généralise bien.
 
 ---
 
 ### Run 3 : Embeddings statiques vs dynamiques
 
 #### Run 3a : Word2Vec + SVM — Embeddings statiques
-**Modèle :** `Word2Vec(vector_size=100, window=5, min_count=2, epochs=10)`
-**Résultats :** `à compléter après Colab`
+
+**Descripteurs :** vecteur moyen Word2Vec (100 dimensions) entraîné sur le corpus de recettes
+**Modèle :** `Word2Vec(vector_size=100, window=5, min_count=2, epochs=10)` — vocab : 11 866 mots
+**Vectorisation :** moyenne des vecteurs Word2Vec sur `titre + ingrédients + recette`
+
+**Principe :** Chaque recette est représentée par la moyenne des vecteurs Word2Vec de ses tokens. Capture la sémantique — *poulet* et *volaille* auront des vecteurs proches contrairement au TF-IDF.
+
+| Classe         | Précision | Rappel |  F1  | Support |
+| -------------- | --------: | -----: | ---: | ------: |
+| Dessert        |      0.98 |   0.99 | 0.99 |     407 |
+| Entrée         |      0.75 |   0.64 | 0.69 |     337 |
+| Plat principal |      0.83 |   0.89 | 0.86 |     644 |
+| **macro avg**  |  **0.85** | **0.84** | **0.844** | **1388** |
 
 #### Run 3b : CamemBERT + SVM — Embeddings dynamiques
-**Modèle :** `camembert-base` via HuggingFace Transformers
-**Résultats :** `à compléter après Colab`
+
+**Descripteurs :** embeddings contextuels CamemBERT (`camembert-base`), moyenne du dernier layer
+**Vectorisation :** sur le `titre` uniquement
+
+**Principe :** Contrairement à Word2Vec (vecteur fixe par mot), CamemBERT produit des représentations **contextuelles** — le même mot aura un vecteur différent selon son contexte. Modèle pré-entraîné sur 138GB de texte français.
+
+| Classe         | Précision | Rappel |  F1  | Support |
+| -------------- | --------: | -----: | ---: | ------: |
+| Dessert        |      0.83 |   0.87 | 0.85 |     407 |
+| Entrée         |      0.63 |   0.43 | 0.51 |     337 |
+| Plat principal |      0.72 |   0.82 | 0.77 |     644 |
+| **macro avg**  |  **0.73** | **0.70** | **0.708** | **1388** |
+
+> ⚠️ CamemBERT seul (F1=0.708) est moins performant car utilisé uniquement sur le titre. La combinaison avec TF-IDF dans le Run 4 corrige cela.
 
 ---
 
-### Run 4 : CamemBERT + TF-IDF + SVM (pour aller plus loin)
-**Résultats :** `à compléter après Colab`
+### Run 4 : Combinaison embeddings + TF-IDF + SVM
+
+Deux variantes testées pour combiner la richesse sémantique des embeddings avec la précision lexicale du TF-IDF via `scipy.sparse.hstack`.
+
+#### Run 4a : TF-IDF + CamemBERT + SVM
+
+**Descripteurs :** TF-IDF (10 000 dim.) + embeddings CamemBERT (768 dim.) = 10 768 features
+**Principe :** CamemBERT apporte la sémantique contextuelle, TF-IDF apporte la précision lexicale sur le vocabulaire culinaire spécifique.
+
+| Classe         | Précision | Rappel |  F1  | Support |
+| -------------- | --------: | -----: | ---: | ------: |
+| Dessert        |      0.99 |   1.00 | 0.99 |     407 |
+| Entrée         |      0.78 |   0.71 | 0.74 |     337 |
+| Plat principal |      0.86 |   0.90 | 0.88 |     644 |
+| **macro avg**  |  **0.88** | **0.87** | **0.873** | **1388** |
+
+#### Run 4b : TF-IDF + Word2Vec + SVM
+
+**Descripteurs :** TF-IDF (10 000 dim.) + embeddings Word2Vec (100 dim.) = 10 100 features
+**Principe :** Word2Vec entraîné sur le corpus culinaire capture la sémantique du domaine, TF-IDF apporte la précision lexicale.
+
+| Classe         | Précision | Rappel |  F1  | Support |
+| -------------- | --------: | -----: | ---: | ------: |
+| Dessert        |      0.99 |   1.00 | 0.99 |     407 |
+| Entrée         |      0.77 |   0.70 | 0.73 |     337 |
+| Plat principal |      0.85 |   0.89 | 0.87 |     644 |
+| **macro avg**  |  **0.87** | **0.86** | **0.865** | **1388** |
 
 ---
 
 ## Résultats
 
-| Run    | Méthode                                | F1 macro      |
-| ------ | -------------------------------------- | ------------: |
-| Run 1  | Baseline (classe majoritaire)          | 0.211         |
-| Run 2a | TF-IDF + SVM (titre seul)              | 0.816         |
-| Run 2b | TF-IDF + SVM (titre + ingr.)           | 0.825         |
-| Run 2c | TF-IDF + SVM (titre + ingr. + recette) | **0.862**     |
-| Run 3a | Word2Vec + SVM                         | `à compléter` |
-| Run 3b | CamemBERT + SVM                        | `à compléter` |
-| Run 4  | CamemBERT + TF-IDF + SVM              | `à compléter` |
+| Run        | Méthode                                |  F1 macro |
+| ---------- | -------------------------------------- | --------: |
+| Run 1      | Baseline (classe majoritaire)          |     0.211 |
+| Run 2a     | TF-IDF + SVM (titre seul)              |     0.816 |
+| Run 2b     | TF-IDF + SVM (titre + ingr.)           |     0.825 |
+| Run 2c     | TF-IDF + SVM (titre + ingr. + recette) |     0.863 |
+| Run 3a     | Word2Vec + SVM                         |     0.844 |
+| Run 3b     | CamemBERT + SVM                        |     0.708 |
+| Run 4b     | TF-IDF + Word2Vec + SVM                |     0.865 |
+| **Run 4a** | **TF-IDF + CamemBERT + SVM**           | **0.873** |
 
 ---
 
 ## Analyse des résultats
 
-### Observations Run 2
-- **Dessert** est la classe la mieux classifiée (F1 = 0.99)
-- **Entrée** est la plus difficile (F1 = 0.72) — confusion avec `Plat principal`
-- Ajouter `recette` améliore le F1 de +0.037 par rapport au titre seul
+### Observations générales
 
-### Matrice de confusion
-*(à compléter)*
+- La progression est claire : Baseline (0.211) → TF-IDF (0.863) → Combinaison (0.873).
+- **Dessert** est la classe la mieux classifiée dans tous les runs — *sucre*, *chocolat*, *farine* sont des marqueurs quasi exclusifs.
+- **Entrée** est systématiquement la plus difficile — forte confusion avec `Plat principal`, les deux partagent un vocabulaire culinaire similaire.
+
+### Apport des embeddings
+
+- Word2Vec seul (0.844) ≈ TF-IDF seul (0.863) — les embeddings statiques capturent bien la sémantique du domaine culinaire.
+- CamemBERT seul (0.708) est décevant sur titre court, mais combiné au TF-IDF (0.873) il devient la **meilleure méthode**.
+- La combinaison TF-IDF + embeddings améliore toujours par rapport aux méthodes seules — les deux représentations sont **complémentaires**.
+
+### Apport de la cross-validation (Run 2)
+
+- F1 CV (0.862 ± 0.004) ≈ F1 test (0.863) — faible écart-type et cohérence train/test confirment l'absence de surapprentissage.
 
 ### Mots les plus décisifs par classe
-*(à compléter)*
-
----
-
-## Réflexion critique
+*(à compléter — `clf.coef_` + `vectorizer.get_feature_names_out()`)*
