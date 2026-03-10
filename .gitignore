@@ -1,0 +1,14 @@
+data/
+
+# Fichiers Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+ 
+# Mac
+.DS_Store
+
+# Environnements virtuels
+venv/
+env/
+python_env_global/
