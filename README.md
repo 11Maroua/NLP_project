@@ -1,6 +1,6 @@
 # DEFT2013 Tâche 2 — Classification de recettes de cuisine
 
-NOM Prenom - NOM Prenom
+ABID Ikram - NAIT SLIMANI Maroua
 
 ---
 
