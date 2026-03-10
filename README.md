@@ -1,6 +1,6 @@
 # DEFT2013 Tâche 2 — Classification de recettes de cuisine
 
-ABID Ikram - NAIT SLIMANI Maroua
+NOM Prenom - NOM Prenom
 
 ---
 
@@ -116,7 +116,7 @@ Placer les fichiers `train.csv` et `test.csv` dans le dossier `data/`.
 | -----: | -----: | -----: | -----: | -----: | ------: | ---------: |
 |  0.860 |  0.858 |  0.867 |  0.858 |  0.868 |   0.862 |  **±0.004** |
 
-> Écart-type très faible (±0.004) → modèle **très stable**, les scores ne dépendent pas du hasard.
+> Écart-type très faible (±0.004) → modèle ** stable**, on sait que les scores ne dépendent pas du hasard.
 
 **Résultats sur le jeu de test :**
 
@@ -150,10 +150,8 @@ Placer les fichiers `train.csv` et `test.csv` dans le dossier `data/`.
 
 #### Run 3b : CamemBERT + SVM — Embeddings dynamiques
 
-**Descripteurs :** embeddings contextuels CamemBERT (`camembert-base`), moyenne du dernier layer
 **Vectorisation :** sur le `titre` uniquement
 
-**Principe :** Contrairement à Word2Vec (vecteur fixe par mot), CamemBERT produit des représentations **contextuelles** — le même mot aura un vecteur différent selon son contexte. Modèle pré-entraîné sur 138GB de texte français.
 
 | Classe         | Précision | Rappel |  F1  | Support |
 | -------------- | --------: | -----: | ---: | ------: |
@@ -162,17 +160,18 @@ Placer les fichiers `train.csv` et `test.csv` dans le dossier `data/`.
 | Plat principal |      0.72 |   0.82 | 0.77 |     644 |
 | **macro avg**  |  **0.73** | **0.70** | **0.708** | **1388** |
 
-> ⚠️ CamemBERT seul (F1=0.708) est moins performant car utilisé uniquement sur le titre. La combinaison avec TF-IDF dans le Run 4 corrige cela.
+> CamemBERT seul (F1=0.708) est moins performant car utilisé uniquement sur le titre. La combinaison avec TF-IDF dans le Run 4 corrige cela.
 
 ---
 
-### Run 4 : Combinaison embeddings + TF-IDF + SVM
+### Run 4 : Pour aller plus loin
 
-Deux variantes testées pour combiner la richesse sémantique des embeddings avec la précision lexicale du TF-IDF via `scipy.sparse.hstack`.
+Trois variantes testées pour dépasser le TF-IDF seul.
 
 #### Run 4a : TF-IDF + CamemBERT + SVM
 
-**Descripteurs :** TF-IDF (10 000 dim.) + embeddings CamemBERT (768 dim.) = 10 768 features
+**Descripteurs :** TF-IDF (10 000 dim.) + embeddings CamemBERT (768 dim.) = 10 768 features, combinés via `scipy.sparse.hstack`
+
 **Principe :** CamemBERT apporte la sémantique contextuelle, TF-IDF apporte la précision lexicale sur le vocabulaire culinaire spécifique.
 
 | Classe         | Précision | Rappel |  F1  | Support |
@@ -184,7 +183,8 @@ Deux variantes testées pour combiner la richesse sémantique des embeddings ave
 
 #### Run 4b : TF-IDF + Word2Vec + SVM
 
-**Descripteurs :** TF-IDF (10 000 dim.) + embeddings Word2Vec (100 dim.) = 10 100 features
+**Descripteurs :** TF-IDF (10 000 dim.) + embeddings Word2Vec (100 dim.) = 10 100 features, combinés via `scipy.sparse.hstack`
+
 **Principe :** Word2Vec entraîné sur le corpus culinaire capture la sémantique du domaine, TF-IDF apporte la précision lexicale.
 
 | Classe         | Précision | Rappel |  F1  | Support |
@@ -193,6 +193,19 @@ Deux variantes testées pour combiner la richesse sémantique des embeddings ave
 | Entrée         |      0.77 |   0.70 | 0.73 |     337 |
 | Plat principal |      0.85 |   0.89 | 0.87 |     644 |
 | **macro avg**  |  **0.87** | **0.86** | **0.865** | **1388** |
+
+#### Run 5 : CamemBERT fine-tuné
+
+**Principe :** Fine-tuning complet de `camembert-base` (110M paramètres) directement sur la tâche de classification. Contrairement aux runs précédents qui utilisent CamemBERT comme extracteur de features figé, ici tous les paramètres sont mis à jour pendant l'entraînement.
+
+**Hyperparamètres :**
+- `learning_rate = 1e-5`
+- `batch_size = 16` + `gradient_accumulation_steps = 2`
+- `num_train_epochs = 5` avec early stopping (patience=3)
+- `fp16 = True` (mixed precision GPU)
+- Texte : `titre + ingrédients + recette[:200]`, `max_length = 256`
+
+**Résultats :** F1 macro = **0.879**
 
 ---
 
@@ -207,7 +220,8 @@ Deux variantes testées pour combiner la richesse sémantique des embeddings ave
 | Run 3a     | Word2Vec + SVM                         |     0.844 |
 | Run 3b     | CamemBERT + SVM                        |     0.708 |
 | Run 4b     | TF-IDF + Word2Vec + SVM                |     0.865 |
-| **Run 4a** | **TF-IDF + CamemBERT + SVM**           | **0.873** |
+| Run 4a     | TF-IDF + CamemBERT + SVM               |     0.873 |
+| **Run 4c** | **CamemBERT fine-tuné**                | **0.879** |
 
 ---
 
@@ -215,15 +229,21 @@ Deux variantes testées pour combiner la richesse sémantique des embeddings ave
 
 ### Observations générales
 
-- La progression est claire : Baseline (0.211) → TF-IDF (0.863) → Combinaison (0.873).
+- La progression est claire : Baseline (0.211) → TF-IDF (0.863) → Fine-tuning (0.879).
 - **Dessert** est la classe la mieux classifiée dans tous les runs — *sucre*, *chocolat*, *farine* sont des marqueurs quasi exclusifs.
 - **Entrée** est systématiquement la plus difficile — forte confusion avec `Plat principal`, les deux partagent un vocabulaire culinaire similaire.
 
 ### Apport des embeddings
 
-- Word2Vec seul (0.844) ≈ TF-IDF seul (0.863) — les embeddings statiques capturent bien la sémantique du domaine culinaire.
-- CamemBERT seul (0.708) est décevant sur titre court, mais combiné au TF-IDF (0.873) il devient la **meilleure méthode**.
+- Word2Vec seul (0.844) ≈ TF-IDF seul (0.863) — les embeddings statiques capturent bien la sémantique du domaine.
+- CamemBERT seul (0.708) est décevant sur titre court, mais combiné au TF-IDF (0.873) il devient très compétitif.
 - La combinaison TF-IDF + embeddings améliore toujours par rapport aux méthodes seules — les deux représentations sont **complémentaires**.
+
+### Apport du fine-tuning
+
+- Le fine-tuning CamemBERT (0.879) est la **meilleure méthode** — adapter tous les paramètres du modèle à la tâche surpasse les embeddings figés.
+- Le gain par rapport au TF-IDF seul est de +0.016, ce qui confirme l'apport des représentations contextuelles profondes.
+- La classe `Entrée` progresse à chaque run plus sophistiqué : 0.69 (Word2Vec) → 0.73 (TF-IDF+Word2Vec) → 0.74 (TF-IDF+CamemBERT) → 0.879 globalement (fine-tuning).
 
 ### Apport de la cross-validation (Run 2)
 
