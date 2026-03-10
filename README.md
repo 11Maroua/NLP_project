@@ -246,3 +246,7 @@ Trois variantes testées pour dépasser le TF-IDF seul.
 ### Apport de la cross-validation (Run 2)
 
 - F1 CV (0.862 ± 0.004) ≈ F1 test (0.863) — faible écart-type et cohérence train/test confirment l'absence de surapprentissage.
+
+
+
+BUT PROF: repérer le problème de plat vs entrée et proposer/explorer une solution pour ce problème.
